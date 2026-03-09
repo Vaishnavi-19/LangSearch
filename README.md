@@ -1,6 +1,6 @@
 # LangSearch
 
-Simple LangChain agent that uses Tavily web search via `tavily_search` tool.
+LangChain agent that uses Tavily Search and returns structured output using Pydantic.
 
 ## Prerequisites
 
@@ -51,6 +51,52 @@ tools = [TavilySearch(tavily_api_key=tavily_api_key)]
 
 When the model decides to search the web, it calls `tavily_search` automatically through the tool binding.
 
+## Structured Response with Pydantic
+
+This project defines a response schema and passes it to `create_agent` using `response_format`.
+
+```python
+from typing import List
+from pydantic import BaseModel, Field
+
+
+class Source(BaseModel):
+	url: str = Field(description="The URL of the source")
+
+
+class AgentResponse(BaseModel):
+	answer: str = Field(description="The agent's answer to the query")
+	sources: List[Source] = Field(default_factory=list)
+```
+
+Agent setup:
+
+```python
+from langchain.agents import create_agent
+from langchain_openai import ChatOpenAI
+from langchain_tavily import TavilySearch
+
+llm = ChatOpenAI(model="gpt-5", api_key=openai_api_key)
+tools = [TavilySearch(tavily_api_key=tavily_api_key)]
+agent = create_agent(model=llm, tools=tools, response_format=AgentResponse)
+```
+
+Invocation format:
+
+```python
+result = agent.invoke(
+	{
+		"messages": [
+			{
+				"role": "user",
+				"content": "Search for 3 job postings for an AI engineer using LangChain in the Bay Area on LinkedIn and list their details.",
+			}
+		]
+	}
+)
+print(result)
+```
+
 ## Run
 
 ```powershell
@@ -61,6 +107,10 @@ python main.py
 
 - `ModuleNotFoundError: No module named 'langchain_tavily'`
   - Install the package: `uv add langchain-tavily` (or `pip install langchain-tavily`).
+
+- `ValidationError` or structured response mismatch
+	- Ensure `response_format=AgentResponse` is passed to `create_agent`.
+	- Ensure your schema fields match what you expect to print/use (`answer`, `sources`).
 
 - `openai.OpenAIError: The api_key client option must be set`
 	- Ensure `OPENAI_API_KEY` is set in `.env`.
