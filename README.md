@@ -1,6 +1,6 @@
 # LangSearch
 
-Simple LangChain agent that uses Tavily web search as a tool.
+Simple LangChain agent that uses Tavily web search via `tavily_search` tool.
 
 ## Prerequisites
 
@@ -14,13 +14,13 @@ Simple LangChain agent that uses Tavily web search as a tool.
 If you use `uv`:
 
 ```powershell
-uv add langchain langchain-openai tavily-python python-dotenv
+uv add langchain langchain-openai langchain-tavily python-dotenv
 ```
 
 If you use `pip`:
 
 ```powershell
-python -m pip install langchain langchain-openai tavily-python python-dotenv
+python -m pip install langchain langchain-openai langchain-tavily python-dotenv
 ```
 
 ## Environment Variables
@@ -29,18 +29,27 @@ Create a `.env` file in the project root:
 
 ```env
 OPENAI_API_KEY=your_openai_api_key
+TAVILY_API_KEY=your_tavily_api_key
+```
+
+Optional backward compatibility:
+
+```env
 TRAVILY_API_KEY=your_tavily_api_key
 ```
 
-Important: this project currently reads `TRAVILY_API_KEY` (with an `R`) from `main.py`.
+`main.py` accepts either `TAVILY_API_KEY` or `TRAVILY_API_KEY`.
 
-## Tavily Import
+## Tavily Search Tool (`tavily_search`)
 
-Use this import in Python:
+This project uses the LangChain Tavily tool:
 
 ```python
-from tavily import TavilyClient
+from langchain_tavily import TavilySearch
+tools = [TavilySearch(tavily_api_key=tavily_api_key)]
 ```
+
+When the model decides to search the web, it calls `tavily_search` automatically through the tool binding.
 
 ## Run
 
@@ -50,14 +59,15 @@ python main.py
 
 ## Troubleshooting
 
-- `ModuleNotFoundError: No module named 'tavily'`
-	- Install the package: `uv add tavily-python` (or `pip install tavily-python`).
+- `ModuleNotFoundError: No module named 'langchain_tavily'`
+  - Install the package: `uv add langchain-tavily` (or `pip install langchain-tavily`).
 
 - `openai.OpenAIError: The api_key client option must be set`
 	- Ensure `OPENAI_API_KEY` is set in `.env`.
 
-- Tavily auth or key issues
-	- Ensure `TRAVILY_API_KEY` is set in `.env` and not empty.
+- Tavily auth or key issues (`Did not find tavily_api_key`)
+	- Ensure `TAVILY_API_KEY` is set in `.env` and not empty.
+	- `TRAVILY_API_KEY` also works in this project as fallback.
 
 - If using Windows terminal and vars still do not load
 	- Restart the terminal after editing `.env`.
